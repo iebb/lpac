@@ -27,6 +27,14 @@ enum es10c_icon_type
     ES10C_ICON_TYPE_UNDEFINED = 255,
 };
 
+struct notification_configuration_information
+{
+    enum es10b_profile_management_operation profileManagementOperation;
+    char *notificationAddress;
+    struct notification_configuration_information *next;
+};
+// SGP.22 v2.2.2 5.5.3 Function: StoreMetadata
+
 struct es10c_profile_info_list
 {
     char iccid[(10 * 2) + 1];
@@ -38,11 +46,7 @@ struct es10c_profile_info_list
     char *profileName;
     enum es10c_icon_type iconType;
     char *icon;
-    struct
-    {
-        char **profileManagementOperation;
-        char *notificationAddress;
-    } notificationConfigurationInfo;
+    struct notification_configuration_information *notificationConfigurationInfo;
     struct
     {
         char *mccmnc;

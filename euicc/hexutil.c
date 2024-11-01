@@ -171,3 +171,21 @@ int euicc_hexutil_bin2gsmbcd(char *output, uint32_t output_len, const uint8_t *b
 
     return 0;
 }
+
+int euicc_hexutil_bin2gsmbcd_nb(char *output, uint32_t output_len, const uint8_t *binData, uint32_t length)
+{
+    if (euicc_hexutil_bin2hex(output, output_len, binData, length))
+    {
+        return -1;
+    }
+
+    length = strlen(output);
+    for (int i = 0; i < length - 1; i += 2)
+    {
+        char temp = output[i];
+        output[i] = output[i + 1];
+        output[i + 1] = temp;
+    }
+
+    return 0;
+}

@@ -14,7 +14,7 @@ struct es8p_metadata
     {
         char **profileManagementOperation;
         char *notificationAddress;
-    } notificationConfigurationInfo;
+    } *notificationConfigurationInfo;
     struct
     {
         char *mccmnc;

@@ -16,6 +16,13 @@ int es10c_get_profiles_info(struct euicc_ctx *ctx, struct es10c_profile_info_lis
     int fret = 0;
     struct euicc_derutil_node n_request = {
         .tag = 0xBF2D, // ProfileInfoListRequest
+        .pack = {
+            .child = &(struct euicc_derutil_node){
+                .tag = 0x5C, // tagList
+                .length = 12,
+                .value = (const uint8_t[]){0x5A, 0x4F, 0x9F, 0x70, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0xB6, 0xB7},
+            },
+        },
     };
     uint32_t reqlen;
     uint8_t *respbuf = NULL;
@@ -158,8 +165,68 @@ int es10c_get_profiles_info(struct euicc_ctx *ctx, struct es10c_profile_info_lis
                     break;
                 }
                 break;
-            case 0xB6:
-            case 0xB7:
+            case 0xB7: {
+                struct euicc_derutil_node owner;
+                owner.self.ptr = tmpnode.value;
+                owner.self.length = 0;
+                p->profileOwner.mccmnc = malloc(11);
+                while (euicc_derutil_unpack_next(&owner, &owner, tmpnode.value, tmpnode.length) == 0) {
+                    switch (owner.tag) {
+                        case 0x80:
+                            euicc_hexutil_bin2gsmbcd_nb(p->profileOwner.mccmnc, 6 + 1, owner.value, owner.length);
+                            break;
+                        case 0x81:
+                            p->profileOwner.gid1 = malloc(owner.length + 1);
+                            memcpy(p->profileOwner.gid1, owner.value, owner.length);
+                            p->profileOwner.gid1[owner.length] = '\0';
+                            break;
+                        case 0x82:
+                            p->profileOwner.gid2 = malloc(owner.length + 1);
+                            memcpy(p->profileOwner.gid2, owner.value, owner.length);
+                            p->profileOwner.gid2[owner.length] = '\0';
+                            break;
+                    }
+                    break;
+                }
+                break;
+            }
+            case 0xB6: {
+                struct euicc_derutil_node notify_info_list;
+                notify_info_list.self.ptr = tmpnode.value;
+                notify_info_list.self.length = 0;
+                struct notification_configuration_information *first_cfg_info = NULL;
+                struct notification_configuration_information *current_cfg_info = NULL;
+                struct notification_configuration_information *last_cfg_info = NULL;
+
+                while (euicc_derutil_unpack_next(&notify_info_list, &notify_info_list, tmpnode.value, tmpnode.length) == 0) {
+                    struct euicc_derutil_node notify_info;
+                    notify_info.self.ptr = notify_info_list.value;
+                    notify_info.self.length = 0;
+                    current_cfg_info = (struct notification_configuration_information *)malloc(sizeof(struct notification_configuration_information));
+                    memset(current_cfg_info, 0, sizeof(struct notification_configuration_information));
+                    while (euicc_derutil_unpack_next(&notify_info, &notify_info, notify_info_list.value, notify_info_list.length) == 0) {
+                        switch (notify_info.tag) {
+                            case 0x80:
+                                current_cfg_info->profileManagementOperation = notify_info.value[1];
+                                break;
+                            case 0x81:
+                                current_cfg_info->notificationAddress = malloc(notify_info.length + 1);
+                                memcpy(current_cfg_info->notificationAddress, notify_info.value, notify_info.length);
+                                current_cfg_info->notificationAddress[notify_info.length] = '\0';
+                        }
+                    }
+                    current_cfg_info->next = 0;
+                    if (!last_cfg_info) {
+                        first_cfg_info = current_cfg_info;
+                        last_cfg_info = first_cfg_info;
+                    } else {
+                        last_cfg_info->next = current_cfg_info;
+                        last_cfg_info = current_cfg_info;
+                    }
+                }
+                p->notificationConfigurationInfo = first_cfg_info;
+                break;
+            }
             case 0xB8:
             case 0x99:
                 fprintf(stderr, "\n[PLEASE REPORT][TODO][TAG %02X]: ", tmpnode.tag);
