@@ -33,6 +33,13 @@ struct notification_configuration_information
     char *notificationAddress;
     struct notification_configuration_information *next;
 };
+
+struct profile_owner
+{
+    char *mccmnc;
+    char *gid1;
+    char *gid2;
+};
 // SGP.22 v2.2.2 5.5.3 Function: StoreMetadata
 
 struct es10c_profile_info_list
@@ -47,12 +54,7 @@ struct es10c_profile_info_list
     enum es10c_icon_type iconType;
     char *icon;
     struct notification_configuration_information *notificationConfigurationInfo;
-    struct
-    {
-        char *mccmnc;
-        char *gid1;
-        char *gid2;
-    } profileOwner;
+    struct profile_owner profileOwner;
     struct
     {
         char *dpOid;

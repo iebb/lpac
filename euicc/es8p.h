@@ -10,17 +10,8 @@ struct es8p_metadata
     enum es10c_icon_type iconType;
     char *icon;
     enum es10c_profile_class profileClass;
-    struct
-    {
-        char **profileManagementOperation;
-        char *notificationAddress;
-    } *notificationConfigurationInfo;
-    struct
-    {
-        char *mccmnc;
-        char *gid1;
-        char *gid2;
-    } profileOwner;
+    struct notification_configuration_information *notificationConfigurationInfo;
+    struct profile_owner profileOwner;
     struct
     {
         char *dpOid;
